@@ -477,7 +477,6 @@ function journalDescription(x){
   const v=String(x?.description??x?.note??x?.desc??'').trim();
   return v||String(x?.name??'').trim()||txLabel(x);
 }
-
 function renderJournal(){
   let f=$('journalFilter')?.value||'all',
       q=($('journalProductFilter')?.value||'').trim().toLowerCase(),
@@ -486,8 +485,9 @@ function renderJournal(){
   let xs=d.tx.filter(x=>{
     if(!inRange(x)) return false;
 
-    // Currency balance records are not separate Roznamcha entries.
-    if(f==='all' && x.type==='currency') return false;
+    // Hide currency balance records, but show currency exchange.
+    if(f==='all' && x.type==='currency' && x.mode!=='exchange')
+      return false;
 
     if(f==='all') return true;
 
@@ -500,7 +500,8 @@ function renderJournal(){
     if(f==='fx')
       return ['fx','currencyExchange','exchange'].includes(x.type);
 
-    if(f==='currency') return x.type==='currency';
+    if(f==='currency')
+      return x.type==='currency';
 
     return x.type===f;
   }).filter(x=>
