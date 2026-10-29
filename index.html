@@ -516,8 +516,95 @@ function renderJournal(){
 }
 
 function printJournalPdf(){const xs=d.tx.filter(inRange).slice().reverse();const rows=xs.map(x=>{let inn='',out='',ci='',co='',bank='',kh='';if(x.type==='sale'){out=x.qty;let cash=0,bankParts=[],k=0;(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Customer Khata'?k+=p.amount:appendBank(bankParts,p.account,p.amount));ci=money(cash);bank=bankParts.join(' | ');kh=money(k)}else if(x.type==='purchase'){inn=x.qty;let cash=0,bankParts=[],k=0;(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Supplier Khata'?k+=p.amount:appendBank(bankParts,p.account,-p.amount));co=money(cash);bank=bankParts.join(' | ');kh=money(k)}else if(x.type==='customerPayment'){const a=+x.amount||0,give=String(x.direction||'receive')==='give';if(x.account==='Cash')ci=give?'-'+money(a):'+'+money(a);else bank=signedAmount(x.account,give?-a:a);kh=(give?'+':'-')+money(a)}else if(x.type==='supplierPayment'){const a=+x.amount||0,direction=String(x.direction||'pay');if(direction==='account'){kh='+'+money(a)}else{const receive=direction==='receive';if(x.account==='Cash')co=receive?'+'+money(a):'-'+money(a);else bank=signedAmount(x.account,receive?a:-a);kh=(receive?'+':'-')+money(a)}}else if(x.type==='bankTransfer'){if(x.from==='Cash'&&x.to!=='Cash'){ci='-'+money(x.amount);bank=signedAmount(x.to,x.amount)}else if(x.to==='Cash'&&x.from!=='Cash'){co='-'+money(x.amount);bank=signedAmount(x.from,-x.amount)}else if(x.from!=='Cash'&&x.to!=='Cash'){bank=x.from+' → '+x.to+': '+money(x.amount)}}else if(x.type==='expense'){co=x.account==='Cash'?money(x.amount):'';bank=x.account!=='Cash'?signedAmount(x.account,-(+x.amount||0)):' '}else if(x.type==='stockMove'){x.dir==='in'?inn=x.qty:out=x.qty}else if(x.type==='production'){inn=x.qty;out=(x.items||[]).reduce((a,i)=>a+i.qty*x.qty,0)}else if(x.type==='partyAdjustment'){const a=+x.amount||0,plus=String(x.direction||'minus')==='plus';kh=(plus?'+':'-')+money(a)}else if(x.type==='partyAdjustment'){const a=+x.amount||0,plus=String(x.direction||'minus')==='plus';kh=(plus?'+':'-')+money(a)}else if(x.type==='journal'){x.jtype==='cashin'?ci=money(x.amount):x.jtype==='cashout'?co=money(x.amount):''}return `<tr><td>${esc(x.date)}</td><td>${esc(journalDescription(x))}</td><td>${esc(x.customer||x.supplier||'')}</td><td>${esc(x.product||x.name||x.desc||'')}</td><td>${inn}</td><td>${out}</td><td>${ci}</td><td>${co}</td><td>${bank}</td><td>${kh}</td></tr>`}).join('');const w=window.open('','_blank');if(!w){alert('Browser blocked popup. Allow popups.');return}w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Roznamcha</title><style>body{font-family:Arial;padding:18px;color:#111}h1{margin:0 0 4px}p{margin:4px 0 12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:6px;font-size:9px;text-align:left}th{background:#eee}</style></head><body><h1>Mastan Shah Software — Roznamcha</h1><p>Date Range: ${esc($('from').value)} to ${esc($('to').value)}</p><table><tr><th>Date</th><th>Description</th><th>Party</th><th>Product</th><th>IN</th><th>OUT</th><th>Cash IN</th><th>Cash OUT</th><th>Bank</th><th>Account</th></tr>${rows||'<tr><td colspan="10">No entries</td></tr>'}</table><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);w.document.close()}
-function journalRow(x){let inn='',out='',ci='',co='',bank='',kh='';if(x.type==='sale'){out=x.qty;let cash=0,bankParts=[],k=0;(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Customer Khata'?k+=p.amount:appendBank(bankParts,p.account,p.amount));ci=money(cash);bank=bankParts.join(' | ');kh=money(k)}else if(x.type==='purchase'){inn=x.qty;let cash=0,bankParts=[],k=0;(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Supplier Khata'?k+=p.amount:appendBank(bankParts,p.account,-p.amount));co=money(cash);bank=bankParts.join(' | ');kh=money(k)}else if(x.type==='customerPayment'){const a=+x.amount||0,give=String(x.direction||'receive')==='give';if(x.account==='Cash')ci=give?'-'+money(a):'+'+money(a);else bank=signedAmount(x.account,give?-a:a);kh=(give?'+':'-')+money(a)}else if(x.type==='supplierPayment'){const a=+x.amount||0,direction=String(x.direction||'pay');if(direction==='account'){kh='+'+money(a)}else{const receive=direction==='receive';if(x.account==='Cash')co=receive?'+'+money(a):'-'+money(a);else bank=signedAmount(x.account,receive?a:-a);kh=(receive?'+':'-')+money(a)}}else if(x.type==='bankTransfer'){if(x.from==='Cash'&&x.to!=='Cash'){ci='-'+money(x.amount);bank=signedAmount(x.to,x.amount)}else if(x.to==='Cash'&&x.from!=='Cash'){co='-'+money(x.amount);bank=signedAmount(x.from,-x.amount)}else if(x.from!=='Cash'&&x.to!=='Cash'){bank=x.from+' → '+x.to+': '+money(x.amount)}}else if(x.type==='expense'){co=x.account==='Cash'?money(x.amount):'';bank=x.account!=='Cash'?signedAmount(x.account,-(+x.amount||0)):' '}else if(x.type==='stockMove'){x.dir==='in'?inn=x.qty:out=x.qty}else if(x.type==='transfer'){inn=x.qty;out=x.qty}else if(x.type==='production'){inn=x.qty;out=(x.items||[]).reduce((a,i)=>a+i.qty*x.qty,0)}else if(x.type==='partyAdjustment'){const a=+x.amount||0,plus=String(x.direction||'minus')==='plus';kh=(plus?'+':'-')+money(a)}else if(x.type==='journal'){x.jtype==='cashin'?ci=money(x.amount):x.jtype==='cashout'?co=money(x.amount):''}return `<tr><td>${x.date}</td><td>${esc(journalDescription(x))}</td><td>${esc(x.customer||x.supplier||'')}</td><td>${esc(x.product||x.name||'')}</td><td>${inn}</td><td>${out}</td><td>${ci}</td><td>${co}</td><td>${bank}</td><td>${kh}</td><td>${actions(x)}</td></tr>`}
-function renderExpense(){let xs=d.tx.filter(x=>x.type==='expense'&&inRange(x)),by={};xs.forEach(x=>by[x.account]=(by[x.account]||0)+x.amount);$('expReport').innerHTML=ACCOUNTS.map(a=>`<span class="tag">${a}: ${money(by[a]||0)}</span>`).join('')+`<div class="big">Grand Total: ${money(xs.reduce((a,x)=>a+x.amount,0))}</div>`;$('expList').innerHTML=xs.slice().reverse().map(x=>`<div class="card">${x.date} • ${esc(x.desc)} • ${money(x.amount)} • ${esc(x.account)} ${actions(x)}</div>`).join('')||'<div class="empty">No expenses</div>'}
+function journalRow(x){
+let inn='',out='',ci='',co='',bank='',kh='';
+
+if(x.type==='sale'){
+out=x.qty;
+let cash=0,bankParts=[],k=0;
+(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Customer Khata'?k+=p.amount:appendBank(bankParts,p.account,p.amount));
+ci=money(cash);
+bank=bankParts.join(' | ');
+kh=money(k);
+
+}else if(x.type==='purchase'){
+inn=x.qty;
+let cash=0,bankParts=[],k=0;
+(x.pays||[]).forEach(p=>p.account==='Cash'?cash+=p.amount:p.account==='Supplier Khata'?k+=p.amount:appendBank(bankParts,p.account,-p.amount));
+co=money(cash);
+bank=bankParts.join(' | ');
+kh=money(k);
+
+}else if(x.type==='customerPayment'){
+const a=+x.amount||0,give=String(x.direction||'receive')==='give';
+if(x.account==='Cash')ci=give?'-'+money(a):'+'+money(a);
+else bank=signedAmount(x.account,give?-a:a);
+kh=(give?'+':'-')+money(a);
+
+}else if(x.type==='supplierPayment'){
+const a=+x.amount||0,direction=String(x.direction||'pay');
+if(direction==='account'){
+kh='+'+money(a);
+}else{
+const receive=direction==='receive';
+if(x.account==='Cash')co=receive?'+'+money(a):'-'+money(a);
+else bank=signedAmount(x.account,receive?a:-a);
+kh=(receive?'+':'-')+money(a);
+}
+
+}else if(x.type==='bankTransfer'){
+if(x.from==='Cash'&&x.to!=='Cash'){
+ci='-'+money(x.amount);
+bank=signedAmount(x.to,x.amount);
+}else if(x.to==='Cash'&&x.from!=='Cash'){
+co='-'+money(x.amount);
+bank=signedAmount(x.from,-x.amount);
+}else if(x.from!=='Cash'&&x.to!=='Cash'){
+bank=x.from+' → '+x.to+': '+money(x.amount);
+}
+
+}else if(x.type==='expense'){
+co=x.account==='Cash'?money(x.amount):'';
+bank=x.account!=='Cash'?signedAmount(x.account,-(+x.amount||0)):' ';
+
+}else if(x.type==='currency'&&x.mode==='exchange'){
+out=esc(String(x.fromQty||0)+' '+(x.fromCurrency||''));
+inn=esc(String(x.toQty||0)+' '+(x.toCurrency||''));
+bank='Currency Exchange';
+
+}else if(x.type==='stockMove'){
+x.dir==='in'?inn=x.qty:out=x.qty;
+
+}else if(x.type==='transfer'){
+inn=x.qty;
+out=x.qty;
+
+}else if(x.type==='production'){
+inn=x.qty;
+out=(x.items||[]).reduce((a,i)=>a+i.qty*x.qty,0);
+
+}else if(x.type==='partyAdjustment'){
+const a=+x.amount||0,plus=String(x.direction||'minus')==='plus';
+kh=(plus?'+':'-')+money(a);
+
+}else if(x.type==='journal'){
+x.jtype==='cashin'?ci=money(x.amount):x.jtype==='cashout'?co=money(x.amount):'';
+}
+
+return `<tr>
+<td>${x.date}</td>
+<td>${esc(journalDescription(x))}</td>
+<td>${esc(x.customer||x.supplier||'')}</td>
+<td>${esc(x.product||x.name||'')}</td>
+<td>${inn}</td>
+<td>${out}</td>
+<td>${ci}</td>
+<td>${co}</td>
+<td>${bank}</td>
+<td>${kh}</td>
+<td>${actions(x)}</td>
+</tr>`;
+}
 function renderProduction(){$('prodList').innerHTML=d.tx.filter(x=>x.type==='production').slice().reverse().map(x=>`<div class="card">${x.date} • ${esc(x.name)} × ${x.qty} • ${esc(x.godam)} • ${(x.items||[]).map(i=>esc(i.name)+' OUT '+i.qty*x.qty).join(', ')} ${actions(x)}</div>`).join('')||'<div class="empty">No production</div>'}
 function renderDashboard(){let c=compute(),xs=d.tx.filter(inRange),sale=xs.filter(x=>x.type==='sale').reduce((a,x)=>a+x.total,0),pur=xs.filter(x=>x.type==='purchase').reduce((a,x)=>a+x.total,0),exp=xs.filter(x=>x.type==='expense').reduce((a,x)=>a+x.amount,0),recv=Object.values(c.cust).reduce((a,x)=>a+x,0),pay=Object.values(c.sup).reduce((a,x)=>a+x,0),profit=sale-pur-exp;$('dashStats').innerHTML=[['Sales',sale],['Purchases',pur],['Expenses',exp],['Receivable',recv],['Payable',pay],['Period Profit',profit]].map(a=>`<div class="card"><div class="kpi">${a[0]}</div><div class="big">${money(a[1])}</div></div>`).join('');const cb=currencyBalances();$('accountCards').innerHTML=['USD','AFN'].map(cur=>`<div class="card"><b>${esc(cur)}</b><div class="big">${Number(cb[cur]||0).toLocaleString(undefined,{maximumFractionDigits:4})} ${esc(cur)}</div></div>`).join('');if($('dashboardCurrencyCards'))$('dashboardCurrencyCards').innerHTML=''; $('godamCards').innerHTML=GODAMS.map(g=>`<div class="card"><b>${g}</b><div>${d.products.map(p=>{let v=c.stock[g+'||'+p]||0;return v?`<span class="tag">${esc(p)}: ${v}</span>`:''}).join('')||'<span class="muted">No stock</span>'}</div></div>`).join('')}
 function renderReports(){let all=d.tx.filter(inRange),sales=all.filter(x=>x.type==='sale'),purs=all.filter(x=>x.type==='purchase');$('reportCards').innerHTML=[['Sales Qty',sales.reduce((a,x)=>a+x.qty,0)],['Sales Amount',sales.reduce((a,x)=>a+x.total,0)],['Purchase Qty',purs.reduce((a,x)=>a+x.qty,0)],['Purchase Amount',purs.reduce((a,x)=>a+x.total,0)],['Expense',all.filter(x=>x.type==='expense').reduce((a,x)=>a+x.amount,0)]].map(a=>`<div class="card"><div class="kpi">${a[0]}</div><div class="big">${money(a[1])}</div></div>`).join('');let f=$('reportTypeFilter')?.value||'all',q=($('reportProductFilter')?.value||'').trim().toLowerCase(),g=$('reportGodamFilter')?.value||'';let xs=all.filter(x=>(f==='all'||(f==='payment'&&['customerPayment','supplierPayment','bankTransfer'].includes(x.type))||(f==='stock'&&['stockMove','transfer','production','openingStock'].includes(x.type))||(f==='currency'&&['currency','fx','currencyExchange','exchange'].includes(x.type))||(f==='all'&&!['currency','customerPayment','supplierPayment','bankTransfer'].includes(x.type))||x.type===f)&&(!q||String(x.product||x.name||x.desc||x.description||'').toLowerCase().includes(q))&&(!g||x.godam===g||x.from===g||x.to===g));$('reportTable').innerHTML=`<table><tr><th>Type</th><th>Date</th><th>Party</th><th>Product</th><th>Qty</th><th>Amount</th></tr>${xs.map(x=>`<tr><td>${txLabel(x)}</td><td>${x.date}</td><td>${esc(x.customer||x.supplier||x.party||'')}</td><td>${esc(x.product||x.name||x.desc||'')}</td><td>${x.qty||''}</td><td>${money(x.total||x.amount||0)}</td></tr>`).join('')||'<tr><td colspan="6">No entries in this category</td></tr>'}</table>`}
