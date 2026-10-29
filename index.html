@@ -115,9 +115,148 @@ function addFxPayRow(){const box=$('fxPays');const div=document.createElement('d
 function refreshCurrencyLists(){syncCurrencies();const opts=d.currencies.map(c=>`<option>${esc(c)}</option>`).join('');['fxCurrency','fxFromCurrency','fxToCurrency'].forEach(id=>{if($(id)){$(id).innerHTML=opts}});if($('fxGoodsGodam'))$('fxGoodsGodam').innerHTML=GODAMS.map(g=>`<option>${esc(g)}</option>`).join('');if($('currencyList'))$('currencyList').innerHTML=d.currencies.map(c=>`<span class="tag">${esc(c)}</span>`).join('')}
 function calcFx(){const q=+$('fxQty')?.value||0,r=+$('fxRate')?.value||0;if($('fxValue'))$('fxValue').value=(q*r).toFixed(2);const gq=+$('fxGoodsQty')?.value||0,gr=+$('fxGoodsRate')?.value||0;if($('fxGoodsValue'))$('fxGoodsValue').value=(gq*gr).toFixed(2)}
 function renderCurrency(){refreshCurrencyLists();if($('currencyList'))$('currencyList').innerHTML=d.currencies.map(c=>`<span class="badge" style="display:inline-block;margin:4px;padding:6px 10px">${esc(c)}</span>`).join('');const b=currencyBalances();$('fxBalances').innerHTML=d.currencies.map(c=>`<div class="card"><div class="kpi">${esc(c)}</div><div class="big">${money(b[c]||0)}</div></div>`).join('');const rows=d.tx.filter(x=>x.type==='currency').slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));const run=Object.fromEntries(d.currencies.map(c=>[c,0]));let html='<table><tr><th>Date</th><th>Mode</th><th>Party</th><th>Currency</th><th>Qty</th><th>Rate</th><th>PKR Value</th><th>From</th><th>To</th><th>Goods</th><th>Cash / Bank</th><th>Description</th><th>Balance</th><th>Action</th></tr>';for(const x of rows){if(x.mode==='exchange'){run[x.fromCurrency]=(run[x.fromCurrency]||0)-(+x.fromQty||0);run[x.toCurrency]=(run[x.toCurrency]||0)+(+x.toQty||0);html+=`<tr><td>${esc(x.date)}</td><td>Exchange</td><td>${esc(x.party||'')}</td><td>${esc(x.fromCurrency)} → ${esc(x.toCurrency)}</td><td>${esc(x.fromQty)} → ${esc(x.toQty)}</td><td></td><td></td><td>${esc(x.fromCurrency)}</td><td>${esc(x.toCurrency)}</td><td></td><td></td><td>${esc(x.description||'')}</td><td>${esc(run[x.toCurrency])}</td><td><button class="btn danger" data-delete="${x.id}">Delete</button></td></tr>`}else{const q=+x.qty||0;run[x.currency]=(run[x.currency]||0)+(x.currencyDelta===undefined?(x.mode==='buy'||x.mode==='receive'?q:-q):+x.currencyDelta);const pay=(x.pays||[]).map(p=>p.account+': '+money(p.amount)).join(' | ');const goods=x.goodsProduct?x.goodsProduct+' × '+x.goodsQty+' @ '+money(x.goodsRate):'';html+=`<tr><td>${esc(x.date)}</td><td>${esc(x.mode)}</td><td>${esc(x.party||'')}</td><td>${esc(x.currency)}</td><td>${esc(q)}</td><td>${esc(x.rate||'')}</td><td>${money(x.pkrValue||0)}</td><td></td><td></td><td>${esc(goods)}</td><td>${esc(pay)}</td><td>${esc(x.description||'')}</td><td>${money(run[x.currency]||0)}</td><td><button class="btn danger" data-delete="${x.id}">Delete</button></td></tr>`}}html+='</table>';$('fxLedger').innerHTML=html.replace('<td colspan="13">','<td colspan="14">')}
-function saveCurrency(){if(!requireAdmin())return;const mode=$('fxMode').value;if(mode==='exchange'){const fc=$('fxFromCurrency').value,tc=$('fxToCurrency').value,fq=+$('fxFromQty').value||0,tq=+$('fxToQty').value||0;if(!fq||!tq||fc===tc){alert('Enter valid From/To currencies and quantities.');return}d.tx.push({id:uid(),type:'currency',mode:'exchange',date:entryDate(),time:new Date().toLocaleTimeString(),fromCurrency:fc,toCurrency:tc,fromQty:fq,toQty:tq,description:$('fxExNote').value.trim()||'Currency Exchange'});addHistory('Currency exchange created','currency',fc+'→'+tc);save();renderAll();alert('Currency exchange saved');return}
-const cur=$('fxCurrency').value,qty=+$('fxQty').value||0,rate=+$('fxRate').value||0,party=$('fxParty').value.trim(),pkr=qty*rate; if(!qty||!rate){alert('Enter currency quantity and PKR rate.');return}let partyFlow=(mode==='buy'||mode==='give')?'give':'receive';let partyEffect='decrease';if($('fxPartyType').value==='customer')partyEffect=partyFlow==='give'?'increase':'decrease';else partyEffect=partyFlow==='give'?'decrease':'increase';const tx={id:uid(),type:'currency',mode,currency:cur,qty,rate,pkrValue:pkr,partyType:$('fxPartyType').value,party,partyEffect,date:entryDate(),time:new Date().toLocaleTimeString(),description:mode==='buy'?'Currency purchased':mode==='sell'?'Currency sold':mode==='receive'?'Currency received from party':'Currency given to party',pays:fxPayRows()};if(mode==='buy'&&!party){alert('For Buy Currency, enter the seller party.');return}if(mode==='sell'&&!party){alert('For Sell Currency, enter the buyer party.');return}if(mode==='buy'||mode==='sell'){const total=tx.pays.reduce((a,p)=>a+p.amount,0);if(Math.abs(total-pkr)>0.01){alert('Cash/Bank payment total must equal PKR Value.');return}}if((mode==='receive'||mode==='give')&&party){if(tx.partyType==='customer'&&!d.customers.some(x=>x.name===party)){if(!confirm('Customer does not exist. Add customer '+party+'?'))return;d.customers.push({id:uid(),name:party,phone:'',address:'',opening:0})}if(tx.partyType==='supplier'&&!d.suppliers.some(x=>x.name===party)){if(!confirm('Supplier does not exist. Add supplier '+party+'?'))return;d.suppliers.push({id:uid(),name:party,phone:'',address:'',opening:0})}}
-if(mode==='goods'){const gp=$('fxGoodsProduct').value.trim(),gq=+$('fxGoodsQty').value||0,gr=+$('fxGoodsRate').value||0;if(!party||!gp||!gq||!gr){alert('Enter party and goods details.');return}const prod=requireExistingProduct(gp);if(!prod)return;tx.mode='goods';tx.goodsDirection=$('fxGoodsDir').value;tx.currencyDelta=$('fxGoodsDir').value==='receiveGoods'?-qty:qty;tx.goodsProduct=prod;tx.goodsQty=gq;tx.goodsRate=gr;tx.godam=$('fxGoodsGodam').value;tx.pkrValue=pkr;const giveToParty=$('fxGoodsDir').value==='receiveGoods';tx.partyEffect=$('fxPartyType').value==='customer'?(giveToParty?'increase':'decrease'):(giveToParty?'decrease':'increase');tx.description='Currency ↔ Goods Settlement'}d.tx.push(tx);addHistory('Currency transaction created','currency',party||cur);save();renderAll();alert('Currency transaction saved')}
+function saveCurrency(){
+if(!requireAdmin())return;
+
+const mode=$('fxMode').value;
+
+if(mode==='exchange'){
+const fc=$('fxFromCurrency').value;
+const tc=$('fxToCurrency').value;
+const fq=+$('fxFromQty').value||0;
+const tq=+$('fxToQty').value||0;
+
+if(!fq||!tq||fc===tc){
+alert('Enter valid From/To currencies and quantities.');
+return;
+}
+
+d.tx.push({
+id:uid(),
+type:'currency',
+mode:'exchange',
+date:entryDate(),
+time:new Date().toLocaleTimeString(),
+fromCurrency:fc,
+toCurrency:tc,
+fromQty:fq,
+toQty:tq,
+description:$('fxExNote').value.trim()||'Currency Exchange'
+});
+
+addHistory('Currency exchange created','currency',fc+'→'+tc);
+save();
+renderAll();
+alert('Currency exchange saved');
+return;
+}
+
+const cur=$('fxCurrency').value;
+const qty=+$('fxQty').value||0;
+const rate=+$('fxRate').value||0;
+const party=$('fxParty').value.trim();
+const pkr=qty*rate;
+
+if(!qty||!rate){
+alert('Enter currency quantity and PKR rate.');
+return;
+}
+
+let partyFlow=(mode==='buy'||mode==='give')?'give':'receive';
+let partyEffect='decrease';
+
+if($('fxPartyType').value==='customer')
+partyEffect=partyFlow==='give'?'increase':'decrease';
+else
+partyEffect=partyFlow==='give'?'decrease':'increase';
+
+const tx={
+id:uid(),
+type:'currency',
+mode,
+currency:cur,
+qty,
+rate,
+pkrValue:pkr,
+partyType:$('fxPartyType').value,
+party,
+partyEffect,
+date:entryDate(),
+time:new Date().toLocaleTimeString(),
+description:mode==='buy'?'Currency purchased':
+mode==='sell'?'Currency sold':
+mode==='receive'?'Currency received from party':
+'Currency given to party',
+pays:fxPayRows()
+};
+
+if(mode==='buy'&&!party){
+alert('For Buy Currency, enter the seller party.');
+return;
+}
+
+if(mode==='sell'&&!party){
+alert('For Sell Currency, enter the buyer party.');
+return;
+}
+
+if(mode==='buy'||mode==='sell'){
+const total=tx.pays.reduce((a,p)=>a+p.amount,0);
+if(Math.abs(total-pkr)>0.01){
+alert('Cash/Bank payment total must equal PKR Value.');
+return;
+}
+}
+
+if((mode==='receive'||mode==='give')&&party){
+if(tx.partyType==='customer'&&!d.customers.some(x=>x.name===party)){
+if(!confirm('Customer does not exist. Add customer '+party+'?'))return;
+d.customers.push({id:uid(),name:party,phone:'',address:'',opening:0});
+}
+
+if(tx.partyType==='supplier'&&!d.suppliers.some(x=>x.name===party)){
+if(!confirm('Supplier does not exist. Add supplier '+party+'?'))return;
+d.suppliers.push({id:uid(),name:party,phone:'',address:'',opening:0});
+}
+}
+
+if(mode==='goods'){
+const gp=$('fxGoodsProduct').value.trim();
+const gq=+$('fxGoodsQty').value||0;
+const gr=+$('fxGoodsRate').value||0;
+
+if(!party||!gp||!gq||!gr){
+alert('Enter party and goods details.');
+return;
+}
+
+const prod=requireExistingProduct(gp);
+if(!prod)return;
+
+tx.mode='goods';
+tx.goodsDirection=$('fxGoodsDir').value;
+tx.currencyDelta=$('fxGoodsDir').value==='receiveGoods'?-qty:qty;
+tx.goodsProduct=prod;
+tx.goodsQty=gq;
+tx.goodsRate=gr;
+tx.godam=$('fxGoodsGodam').value;
+tx.pkrValue=pkr;
+
+const giveToParty=$('fxGoodsDir').value==='receiveGoods';
+
+tx.partyEffect=$('fxPartyType').value==='customer'
+?(giveToParty?'increase':'decrease')
+:(giveToParty?'decrease':'increase');
+
+tx.description='Currency ↔ Goods Settlement';
+}
+
+d.tx.push(tx);
+addHistory('Currency transaction created','currency',party||cur);
+save();
+renderAll();
+alert('Currency transaction saved');
+}
 function compute(){let bal=Object.fromEntries(ACCOUNTS.map(a=>[a,Number(d.opening.accounts[a]||0)])), stock={};let cust={},sup={};d.customers.forEach(x=>cust[x.name]=Number(x.opening||0));d.suppliers.forEach(x=>sup[x.name]=Number(x.opening||0));
 for(const x of d.tx){if(x.type==='sale'){stock[x.godam+'||'+x.product]=(stock[x.godam+'||'+x.product]||0)-x.qty;(x.pays||[]).forEach(p=>{if(p.account==='Customer Khata'&&x.customer)cust[x.customer]=(cust[x.customer]||0)+(+p.amount||0);else if(p.account==='Supplier Khata'&&x.supplier)sup[x.supplier]=(sup[x.supplier]||0)-(+p.amount||0);else bal[p.account]=(bal[p.account]||0)+(+p.amount||0)})}else if(x.type==='purchase'){stock[x.godam+'||'+x.product]=(stock[x.godam+'||'+x.product]||0)+x.qty;(x.pays||[]).forEach(p=>{if(p.account==='Supplier Khata'&&x.supplier)sup[x.supplier]=(sup[x.supplier]||0)+(+p.amount||0);else if(p.account==='Customer Khata'&&x.customer)cust[x.customer]=(cust[x.customer]||0)-(+p.amount||0);else bal[p.account]=(bal[p.account]||0)-(+p.amount||0)})}else if(x.type==='customerPayment'){const a=Number(x.amount)||0;const direction=String(x.direction||'receive').toLowerCase();if(direction==='freight_out')cust[x.customer]=(cust[x.customer]||0)+a;else if(direction==='freight_in')cust[x.customer]=(cust[x.customer]||0)-a;else{const give=direction==='give';cust[x.customer]=(cust[x.customer]||0)+(give?a:-a);if(x.account)bal[x.account]=(bal[x.account]||0)+(give?-a:a)}}else if(x.type==='supplierPayment'){const a=Number(x.amount)||0;const direction=String(x.direction||'pay').toLowerCase();if(direction==='freight_in')sup[x.supplier]=(sup[x.supplier]||0)-a;else if(direction==='freight_out')sup[x.supplier]=(sup[x.supplier]||0)+a;else{const receive=direction==='receive';sup[x.supplier]=(sup[x.supplier]||0)+(receive?a:-a);if(x.account)bal[x.account]=(bal[x.account]||0)+(receive?a:-a)}}else if(x.type==='partyAdjustment'){const a=Number(x.amount)||0;const delta=String(x.direction||'minus')==='plus'?a:-a;if(x.partyKind==='customer')cust[x.customer]=(cust[x.customer]||0)+delta;else sup[x.supplier]=(sup[x.supplier]||0)+delta}else if(x.type==='bankTransfer'){bal[x.from]=(bal[x.from]||0)-x.amount;bal[x.to]=(bal[x.to]||0)+x.amount}else if(x.type==='expense'){bal[x.account]=(bal[x.account]||0)-x.amount}else if(x.type==='stockMove'){let k=x.godam+'||'+x.product;stock[k]=(stock[k]||0)+(x.dir==='in'?x.qty:-x.qty)}else if(x.type==='transfer'){let a=x.from+'||'+x.product,b=x.to+'||'+x.product;stock[a]=(stock[a]||0)-x.qty;stock[b]=(stock[b]||0)+x.qty}else if(x.type==='production'){let k=x.godam+'||'+x.name;stock[k]=(stock[k]||0)+x.qty;(x.items||[]).forEach(i=>{let q=i.qty*x.qty,kk=x.godam+'||'+i.name;stock[kk]=(stock[kk]||0)-q})}else if(x.type==='journal'){if(x.jtype==='cashin')bal.Cash+=x.amount;if(x.jtype==='cashout')bal.Cash-=x.amount}else if(x.type==='currency'){if(x.party){const v=+x.pkrValue||0;const delta=x.partyEffect==='increase'?v:-v;if(x.partyType==='customer')cust[x.party]=(cust[x.party]||0)+delta;else if(x.partyType==='supplier')sup[x.party]=(sup[x.party]||0)+delta}if(x.mode==='buy'){(x.pays||[]).forEach(p=>bal[p.account]=(bal[p.account]||0)-(+p.amount||0))}else if(x.mode==='sell'){(x.pays||[]).forEach(p=>bal[p.account]=(bal[p.account]||0)+(+p.amount||0))}if(x.mode==='goods'){let k=x.godam+'||'+x.goodsProduct;if(x.goodsDirection==='receiveGoods')stock[k]=(stock[k]||0)+(+x.goodsQty||0);else stock[k]=(stock[k]||0)-(+x.goodsQty||0)}}}
 return {bal,stock,cust,sup}}
