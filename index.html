@@ -45,29 +45,75 @@ let cloudLoaded=false, cloudSaving=false, cloudSaveTimer=null;
 function cloudHeaders(){return {'apikey':SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'}}
 async function cloudReq(path,opts={}){let r=await fetch(SUPABASE_URL+'/rest/v1/'+path,Object.assign({headers:cloudHeaders()},opts));if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()}
 function cloudStatus(msg,ok=true){let e=$('cloudbar');if(e){e.textContent=(ok?'☁️ ':'⚠️ ')+msg;e.className='cloudbar '+(ok?'cloudok':'clouderr')}}
+
 async function cloudLoad(){
-  cloudLoaded=false;
-  if(!SUPABASE_URL||!SUPABASE_KEY){cloudStatus('Local mode • Supabase not configured',false);renderAll();return;}
+  cloudLoaded = false;
+
+  if(!SUPABASE_URL || !SUPABASE_KEY){
+    cloudStatus('Local mode • Supabase not configured', false);
+    renderAll();
+    return;
+  }
+
   try{
     cloudStatus('Connecting to Mastan Shah Software cloud…');
-    const rows=await cloudReq('gme_state?select=id,shop_id,state,updated_at&shop_id=eq.'+encodeURIComponent(CLOUD_SHOP_ID)+'&limit=1');
-    if(Array.isArray(rows)&&rows.length){
-      const incoming=rows[0].state||{};
-      d=Object.assign(empty(),incoming);
-      syncGodams();syncAccounts();saveLocal();
-      cloudLoaded=true;cloudStatus('Online • Mastan Shah Software cloud connected');
+
+    const rows = await cloudReq(
+      'gme_state?select=id,shop_id,state,updated_at&shop_id=eq.' +
+      encodeURIComponent(CLOUD_SHOP_ID) +
+      '&limit=1'
+    );
+
+    if(Array.isArray(rows) && rows.length){
+      const incoming = rows[0].state || {};
+
+      d = Object.assign(empty(), incoming);
+
+      syncGodams();
+      syncAccounts();
+      saveLocal();
+
+      cloudLoaded = true;
+      cloudStatus('Online • Mastan Shah Software cloud connected');
+
       renderAll();
+
     }else{
-      await cloudReq('gme_state?on_conflict=shop_id',{method:'POST',headers:{...cloudHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({shop_id:CLOUD_SHOP_ID,state:d})});
-      cloudLoaded=true;cloudStatus('Online • Mastan Shah Software cloud connected');
+      await cloudReq(
+        'gme_state?on_conflict=shop_id',
+        {
+          method:'POST',
+          headers:{
+            ...cloudHeaders(),
+            'Prefer':'resolution=merge-duplicates,return=minimal'
+          },
+          body:JSON.stringify({
+            shop_id:CLOUD_SHOP_ID,
+            state:d
+          })
+        }
+      );
+
+      cloudLoaded = true;
+      cloudStatus('Online • Mastan Shah Software cloud connected');
+
+      renderAll();
     }
+
   }catch(e){
-    cloudLoaded=false;
-    cloudStatus('CLOUD OFFLINE — Sale/Purchase entries are local only. Check Supabase table/API permissions.',false);
-    console.warn('Supabase cloudLoad:',e);
+    cloudLoaded = false;
+
+    cloudStatus(
+      'CLOUD OFFLINE — Sale/Purchase entries are local only. Check Supabase table/API permissions.',
+      false
+    );
+
+    console.warn('Supabase cloudLoad:', e);
+
     renderAll();
   }
 }
+
 async function cloudSave(){
   if(!SUPABASE_URL||!SUPABASE_KEY||!cloudLoaded||cloudSaving)return;
   clearTimeout(cloudSaveTimer);
