@@ -36,6 +36,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9bbcff;border-color:#
 .ledgerWide th:nth-child(11),.ledgerWide td:nth-child(11){min-width:150px}
 .ledgerWide th:last-child,.ledgerWide td:last-child{min-width:145px}
 @media print{.ledgerWide{width:100%!important;min-width:0!important}.ledgerWide th,.ledgerWide td{white-space:nowrap!important;padding:6px 8px!important;font-size:9px!important}}
+ 
+#reports .row{align-items:end}#reports #reportCategory{min-width:220px}#reports #reportHeading h3{margin:8px 0 4px;color:#1d4ed8}
+#reports #reportTable table{min-width:1100px}#reports #reportTable th{position:sticky;top:0;z-index:1}
+#reports #reportTable .card{margin:12px 0}#reports #reportCards .big{font-size:21px}
 </style></head><body>
 
 <div id="app" class="hide"><div id="cloudbar" class="cloudbar">☁️ Connecting to Supabase…</div><header class="top"><div class="wrap"><h1>Mastan Shah Software</h1><div class="small">Mastan Shah Software • <span id="roleBadge"></span></div></div></header><div class="wrap"><nav class="tabs" id="tabs"><button class="btn primary" data-tab="dashboard">Dashboard</button><button class="btn" data-tab="sale">Sale</button><button class="btn" data-tab="purchase">Purchase</button><button class="btn" data-tab="payments">Payments</button><button class="btn" data-tab="currency">Currency / FX</button><button class="btn" data-tab="ledgers">Ledgers</button><button class="btn" data-tab="people">Customer/Supplier</button><button class="btn" data-tab="stock">Stock</button><button class="btn" data-tab="journal">Roznamcha</button><button class="btn" data-tab="reports">Reports</button><button class="btn" data-tab="history">History</button><button class="btn" data-tab="backup">Backup</button><button class="btn" data-tab="admin2">Admin 2</button></nav><div class="panel" id="entryDatePanel" style="margin:10px 0;background:#fff;border:2px solid #dbeafe"><div class="row" style="align-items:end"><div><label>Entry Date — all new transactions</label><input id="entryDate" type="date"></div><div><label>View Full Data for Date</label><input id="viewDate" type="date"></div><div style="flex:0 0 auto;min-width:120px"><button class="btn" id="entryToday" type="button">Use Today</button></div><div style="flex:0 0 auto;min-width:150px"><button class="btn primary" id="viewDateBtn" type="button">View Selected Date</button></div></div></div>
@@ -59,7 +63,31 @@ input:focus,select:focus,textarea:focus{outline:2px solid #9bbcff;border-color:#
 <section id="production" class="tab hide"><div class="panel"><h3>Fitting / Production</h3><form id="prodForm"><div class="row"><input id="prodName" placeholder="Finished Product" required><input id="prodQty" type="number" min="1" required><select id="prodGodam"></select></div><div id="recipe"></div><button type="button" class="btn" id="addRecipe">+ Raw Item</button> <button class="btn primary adminOnly">Produce</button></form></div><div class="panel"><h3>Production History</h3><div id="prodList"></div></div></section>
 <section id="expense" class="tab hide"><div class="panel"><h3>Expense</h3><form id="expenseForm"><div class="row"><input id="expDesc" placeholder="Transport / Loading / Bill / Salary" required><input id="expAmount" type="number" min="1" required><select id="expAccount"></select></div><button class="btn primary adminOnly">Save Expense</button></form></div><div class="panel"><h3>Expense Report</h3><div id="expReport"></div><div id="expList"></div></div></section>
 <section id="journal" class="tab hide"><div class="panel"><div class="row"><h3>Roznamcha</h3><div><label>From Date</label><input id="journalFrom" type="date"></div><div><label>To Date</label><input id="journalTo" type="date"></div><button class="btn" id="journalRangeApply" type="button">View Records</button><select id="journalFilter" style="max-width:190px"><option value="all">All Entries</option><option value="sale">Sales Only</option><option value="purchase">Purchases Only</option><option value="payment">Payments Only</option><option value="stock">Stock Only</option><option value="expense">Expenses Only</option><option value="fx">Currency Exchange Only</option></select><input id="journalProductFilter" list="productDL" placeholder="Search product (e.g. 24 Smart)" style="max-width:220px"><select id="journalGodamFilter" style="max-width:180px"><option value="">All Godams</option></select><button class="btn" id="printJournal" type="button">Print</button><button class="btn primary" id="pdfJournal" type="button">PDF / Print</button></div><form id="journalForm"><div class="row"><input id="jDesc" placeholder="Manual note" required><input id="jAmount" type="number" min="0"><select id="jType"><option value="note">Note</option><option value="cashin">Cash IN</option><option value="cashout">Cash OUT</option></select></div><button class="btn primary adminOnly">Save Note</button></form><div id="journalList"></div></div></section>
-<section id="reports" class="tab hide"><div class="panel"><h3>Reports</h3><div class="row"><div><label>From Date</label><input id="reportFrom" type="date"></div><div><label>To Date</label><input id="reportTo" type="date"></div><button class="btn" id="reportRangeApply" type="button">View Records</button></div><div id="reportCards" class="statgrid"></div><div class="row"><div><label>Product / Stock Search</label><input id="reportProductFilter" list="productDL" placeholder="24 Smart, 32 Smart..."></div><div><label>Godam</label><select id="reportGodamFilter"><option value="">All Godams</option></select></div></div><label>Show Entries By Type</label><select id="reportTypeFilter"><option value="all">All Entries</option><option value="sale">Sales Only</option><option value="purchase">Purchases Only</option><option value="payment">Payments Only</option><option value="stock">Stock Only</option><option value="expense">Expenses Only</option><option value="currency">Currency / FX Only</option><option value="partyAdjustment">Account Adjustments Only</option></select><div class="tableWrap" id="reportTable"></div></div></section>
+<section id="reports" class="tab hide">
+<div class="panel">
+<h3>Advanced Reports</h3>
+<p class="muted">Select report category, date range, party/account, product and Godam. Detailed records are calculated from saved transactions.</p>
+<div class="row">
+ <div><label>Report Category</label><select id="reportCategory">
+  <option value="all">All Transactions</option><option value="bankin">Cash / Bank IN Only</option><option value="bankout">Cash / Bank OUT Only</option>
+  <option value="customer">Customer Report</option><option value="supplier">Supplier Report</option><option value="bank">Bank / Cash Account Report</option>
+  <option value="stock">Stock Report</option><option value="godam">Godam-wise Report</option><option value="sale">Sales Report</option>
+  <option value="purchase">Purchase Report</option><option value="expense">Expense Report</option><option value="payment">Payments Report</option>
+  <option value="currency">Currency / FX Report</option><option value="adjustment">Account Adjustments</option>
+ </select></div>
+ <div><label>From Date</label><input id="reportFrom" type="date"></div><div><label>To Date</label><input id="reportTo" type="date"></div>
+</div>
+<div class="row" style="margin-top:8px"><div id="reportEntityWrap" class="hide"><label id="reportEntityLabel">Select Name</label><select id="reportEntity"><option value="">All</option></select></div><div id="reportGodamWrap" class="hide"><label>Godam Filter</label><select id="reportGodam"><option value="">All Godams</option></select></div></div>
+<div class="row" style="margin-top:8px">
+ <button class="btn" type="button" data-report-range="today">Today</button><button class="btn" type="button" data-report-range="yesterday">Yesterday</button>
+ <button class="btn" type="button" data-report-range="week">This Week</button><button class="btn" type="button" data-report-range="month">This Month</button><button class="btn" type="button" data-report-range="year">This Year</button>
+ <button class="btn primary" id="reportRangeApply" type="button">View Records</button>
+</div>
+<div id="reportHeading" style="margin-top:12px"></div>
+<div id="reportCards" class="statgrid"></div>
+<div class="row" style="margin-top:10px"><button class="btn" id="reportPrint" type="button">PDF / Print</button><button class="btn wa" id="reportWhatsApp" type="button">WhatsApp PDF</button><button class="btn" id="reportCsv" type="button">Download CSV</button></div>
+<div class="tableWrap" id="reportTable" style="margin-top:12px"></div>
+</div></section>
 <section id="snapshot" class="tab hide"><div class="panel"><h3>Capital Snapshot</h3><div class="row"><input id="snapDate" type="date"><input id="snapName" placeholder="Snapshot name"></div><div id="snapProducts"></div><div class="row"><input id="snapCash" type="number" placeholder="Cash"><input id="snapMeezan" type="number" placeholder="Bank 1"><input id="snapAlfalah" type="number" placeholder="Bank 3"><input id="snapFaisal" type="number" placeholder="Bank 4"><input id="snapBaseer" type="number" placeholder="Bank 2"><input id="snapRecv" type="number" placeholder="Customer Receivable"><input id="snapPayable" type="number" placeholder="Supplier Payable"></div><button class="btn primary adminOnly" id="saveSnapshot">Save Snapshot</button><div id="snapTotal"></div></div><div class="panel"><h3>Saved Snapshots</h3><div id="snapList"></div></div></section>
 <section id="history" class="tab hide"><div class="panel"><h3>Edit / Delete History</h3><div id="historyList"></div></div></section>
 <section id="backup" class="tab hide"><div class="panel"><h3>Backup & Restore</h3><p>Backup file download کریں۔ نئے موبائل پر Restore کریں۔</p><button class="btn primary" id="backupBtn">Download Backup</button> <input id="restoreFile" type="file" accept="application/json"><button class="btn adminOnly" id="restoreBtn">Restore</button><hr><button class="btn danger adminOnly" id="clearBtn">Delete All Local Data</button><p class="muted">یہ V8 cloud build Supabase database کے لیے تیار ہے۔ Cloud setup مکمل ہونے کے بعد data devices کے درمیان sync ہوگا۔</p></div></section>
@@ -514,7 +542,167 @@ function journalRow(x){let inn='',out='',ci='',co='',bank='',kh='';if(x.type==='
 function renderExpense(){let xs=d.tx.filter(x=>x.type==='expense'&&inRange(x)),by={};xs.forEach(x=>by[x.account]=(by[x.account]||0)+x.amount);$('expReport').innerHTML=ACCOUNTS.map(a=>`<span class="tag">${a}: ${money(by[a]||0)}</span>`).join('')+`<div class="big">Grand Total: ${money(xs.reduce((a,x)=>a+x.amount,0))}</div>`;$('expList').innerHTML=xs.slice().reverse().map(x=>`<div class="card">${x.date} • ${esc(x.desc)} • ${money(x.amount)} • ${esc(x.account)} ${actions(x)}</div>`).join('')||'<div class="empty">No expenses</div>'}
 function renderProduction(){$('prodList').innerHTML=d.tx.filter(x=>x.type==='production').slice().reverse().map(x=>`<div class="card">${x.date} • ${esc(x.name)} × ${x.qty} • ${esc(x.godam)} • ${(x.items||[]).map(i=>esc(i.name)+' OUT '+i.qty*x.qty).join(', ')} ${actions(x)}</div>`).join('')||'<div class="empty">No production</div>'}
 function renderDashboard(){let c=compute(),xs=d.tx.filter(inRange),sale=xs.filter(x=>x.type==='sale').reduce((a,x)=>a+x.total,0),pur=xs.filter(x=>x.type==='purchase').reduce((a,x)=>a+x.total,0),exp=xs.filter(x=>x.type==='expense').reduce((a,x)=>a+x.amount,0),recv=Object.values(c.cust).reduce((a,x)=>a+x,0),pay=Object.values(c.sup).reduce((a,x)=>a+x,0),profit=sale-pur-exp;$('dashStats').innerHTML=[['Sales',sale],['Purchases',pur],['Expenses',exp],['Receivable',recv],['Payable',pay],['Period Profit',profit]].map(a=>`<div class="card"><div class="kpi">${a[0]}</div><div class="big">${money(a[1])}</div></div>`).join('');const cb=currencyBalances();$('accountCards').innerHTML=['USD','AFN'].map(cur=>`<div class="card"><b>${esc(cur)}</b><div class="big">${Number(cb[cur]||0).toLocaleString(undefined,{maximumFractionDigits:4})} ${esc(cur)}</div></div>`).join('');if($('dashboardCurrencyCards'))$('dashboardCurrencyCards').innerHTML=d.currencies.map(cur=>`<div class="card"><div class="kpi">${esc(cur)} Balance</div><div class="big">${Number(cb[cur]||0).toLocaleString(undefined,{maximumFractionDigits:6})} ${esc(cur)}</div></div>`).join(''); $('godamCards').innerHTML=GODAMS.map(g=>`<div class="card"><b>${g}</b><div>${d.products.map(p=>{let v=c.stock[g+'||'+p]||0;return v?`<div class="dashboardStockItem"><div class="dashboardStockName">${d.productImages?.[p]?`<img src="${d.productImages[p]}" alt="">`:'📦'}<span>${esc(p)}</span></div><div class="dashboardStockQty">${Number(v).toLocaleString()} ${esc((d.stockUnits?.[g+'||'+p]||d.productUnits?.[p]||stockUnitFor(g,p)||'Qty'))}</div></div>`:''}).join('')||'<span class="muted">No stock</span>'}</div></div>`).join('')}
-function renderReports(){let all=d.tx.filter(inRange),sales=all.filter(x=>x.type==='sale'),purs=all.filter(x=>x.type==='purchase');$('reportCards').innerHTML=[['Sales Qty',sales.reduce((a,x)=>a+x.qty,0)],['Sales Amount',sales.reduce((a,x)=>a+x.total,0)],['Purchase Qty',purs.reduce((a,x)=>a+x.qty,0)],['Purchase Amount',purs.reduce((a,x)=>a+x.total,0)],['Expense',all.filter(x=>x.type==='expense').reduce((a,x)=>a+x.amount,0)]].map(a=>`<div class="card"><div class="kpi">${a[0]}</div><div class="big">${money(a[1])}</div></div>`).join('');let f=$('reportTypeFilter')?.value||'all',q=($('reportProductFilter')?.value||'').trim().toLowerCase(),g=$('reportGodamFilter')?.value||'';let xs=all.filter(x=>(f==='all'||(f==='payment'&&['customerPayment','supplierPayment','bankTransfer'].includes(x.type))||(f==='stock'&&['stockMove','transfer','production','openingStock'].includes(x.type))||(f==='currency'&&['currency','fx','currencyExchange','exchange'].includes(x.type))||(f==='all'&&!['currency','customerPayment','supplierPayment','bankTransfer'].includes(x.type))||x.type===f)&&(!q||String(x.product||x.name||x.desc||x.description||'').toLowerCase().includes(q))&&(!g||x.godam===g||x.from===g||x.to===g));$('reportTable').innerHTML=`<table><tr><th>Type</th><th>Date</th><th>Party</th><th>Product</th><th>Qty</th><th>Amount</th></tr>${xs.map(x=>`<tr><td>${txLabel(x)}</td><td>${x.date}</td><td>${esc(x.customer||x.supplier||x.party||'')}</td><td>${esc(x.product||x.name||x.desc||'')}</td><td>${esc(qtyWithUnit(x.qty||'',x.unit))}</td><td>${money(x.total||x.amount||0)}</td></tr>`).join('')||'<tr><td colspan="6">No entries in this category</td></tr>'}</table>`}
+function reportRange(){
+ const f=$('reportFrom')?.value||today(),t=$('reportTo')?.value||today();
+ return {f,t};
+}
+function reportAccountMoves(x){
+ const moves=[],add=(account,amount)=>{if(account&&Math.abs(Number(amount)||0)>0.000001)moves.push({account:String(account),amount:Number(amount)})};
+ if(x.type==='sale'){(x.pays||[]).forEach(p=>{if(!['Customer Khata','Supplier Khata'].includes(p.account))add(p.account,+p.amount||0)})}
+ else if(x.type==='purchase'){(x.pays||[]).forEach(p=>{if(!['Customer Khata','Supplier Khata'].includes(p.account))add(p.account,-(+p.amount||0))})}
+ else if(x.type==='saleReturn'){(x.pays||[]).forEach(p=>{if(!['Customer Khata','Supplier Khata'].includes(p.account))add(p.account,-(+p.amount||0))})}
+ else if(x.type==='purchaseReturn'){(x.pays||[]).forEach(p=>{if(!['Customer Khata','Supplier Khata'].includes(p.account))add(p.account,+p.amount||0)})}
+ else if(x.type==='customerPayment'){const dir=String(x.direction||'receive');if(dir==='receive')add(x.account,+x.amount||0);else if(dir==='give')add(x.account,-(+x.amount||0))}
+ else if(x.type==='supplierPayment'){const dir=String(x.direction||'pay');if(dir==='pay')add(x.account,-(+x.amount||0));else if(dir==='receive')add(x.account,+x.amount||0)}
+ else if(x.type==='expense')add(x.account,-(+x.amount||0));
+ else if(x.type==='bankTransfer'){add(x.from,-(+x.amount||0));add(x.to,+x.amount||0)}
+ else if(x.type==='journal'){if(x.jtype==='cashin')add('Cash',+x.amount||0);if(x.jtype==='cashout')add('Cash',-(+x.amount||0))}
+ else if(x.type==='currency'){if(x.mode==='buy')(x.pays||[]).forEach(p=>add(p.account,-(+p.amount||0)));if(x.mode==='sell')(x.pays||[]).forEach(p=>add(p.account,+p.amount||0))}
+ return moves;
+}
+function reportCatalogFor(category){
+ if(category==='godam')return {label:'Select Godam',items:GODAMS,showGodam:false};
+ if(['sale','purchase','stock'].includes(category))return {label:'Select Product',items:d.products||[],showGodam:true};
+ if(category==='customer')return {label:'Select Customer',items:(d.customers||[]).map(x=>x.name),showGodam:false};
+ if(category==='supplier')return {label:'Select Supplier',items:(d.suppliers||[]).map(x=>x.name),showGodam:false};
+ if(['bank','bankin','bankout'].includes(category))return {label:'Select Account / Bank',items:ACCOUNTS,showGodam:false};
+ return {label:'',items:[],showGodam:false};
+}
+function refreshReportFilters(){
+ const category=$('reportCategory')?.value||'all',cfg=reportCatalogFor(category),wrap=$('reportEntityWrap'),select=$('reportEntity'),godamWrap=$('reportGodamWrap'),godam=$('reportGodam');
+ if(!wrap||!select||!godamWrap||!godam)return;
+ wrap.classList.toggle('hide',!cfg.items.length);$('reportEntityLabel').textContent=cfg.label;
+ const old=select.value;select.innerHTML='<option value="">'+(['bank','bankin','bankout'].includes(category)?'All Accounts':'All')+'</option>'+cfg.items.filter(Boolean).map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+ if(cfg.items.includes(old))select.value=old;
+ godamWrap.classList.toggle('hide',!cfg.showGodam);
+ const oldGodam=godam.value;godam.innerHTML='<option value="">All Godams</option>'+GODAMS.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+ if(GODAMS.includes(oldGodam))godam.value=oldGodam;
+}
+function reportMatchesEntity(x,category,selected){
+ if(!selected)return true;
+ if(category==='godam')return String(x.godam||'')===selected||String(x.from||'')===selected||String(x.to||'')===selected;
+ if(['sale','purchase','stock'].includes(category))return String(x.product||x.name||x.goodsProduct||'')===selected||(Array.isArray(x.items)&&x.items.some(i=>String(i.product||i.name||'')===selected));
+ if(category==='customer')return String(x.customer||((x.partyKind==='customer'||x.partyType==='customer')?x.party:'')||'')===selected;
+ if(category==='supplier')return String(x.supplier||((x.partyKind==='supplier'||x.partyType==='supplier')?x.party:'')||'')===selected;
+ if(['bank','bankin','bankout'].includes(category))return reportAccountMoves(x).some(m=>m.account===selected&&(category==='bankin'?m.amount>0:category==='bankout'?m.amount<0:true));
+ return true;
+}
+function reportRows(){
+ const r=reportRange(),category=$('reportCategory')?.value||'all',selected=$('reportEntity')?.value||'',selectedGodam=$('reportGodam')?.value||'';
+ if(r.f>r.t){alert('From Date cannot be later than To Date.');return []}
+ const txs=d.tx.filter(x=>String(x.date||'')>=r.f&&String(x.date||'')<=r.t).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+ const result=[];
+ txs.forEach(x=>{
+  const moves=reportAccountMoves(x),cashInAll=moves.filter(m=>m.amount>0).reduce((a,m)=>a+m.amount,0),cashOutAll=moves.filter(m=>m.amount<0).reduce((a,m)=>a+Math.abs(m.amount),0);
+  const isCustomer=!!x.customer||(x.type==='partyAdjustment'&&x.partyKind==='customer')||(x.partyType==='customer'&&!!x.party);
+  const isSupplier=!!x.supplier||(x.type==='partyAdjustment'&&x.partyKind==='supplier')||(x.partyType==='supplier'&&!!x.party);
+  const isStock=['sale','purchase','saleReturn','purchaseReturn','stockMove','transfer','production'].includes(x.type)||(x.type==='currency'&&x.mode==='goods');
+  const hasGodam=!!(x.godam||x.from||x.to);let include=false;
+  if(category==='all')include=true;
+  else if(category==='bankin')include=cashInAll>0;
+  else if(category==='bankout')include=cashOutAll>0;
+  else if(category==='customer')include=isCustomer;
+  else if(category==='supplier')include=isSupplier;
+  else if(category==='bank')include=moves.length>0;
+  else if(category==='stock')include=isStock;
+  else if(category==='godam')include=isStock&&hasGodam;
+  else if(category==='sale')include=x.type==='sale'||x.type==='saleReturn';
+  else if(category==='purchase')include=x.type==='purchase'||x.type==='purchaseReturn';
+  else if(category==='expense')include=x.type==='expense';
+  else if(category==='payment')include=['customerPayment','supplierPayment','bankTransfer'].includes(x.type);
+  else if(category==='currency')include=x.type==='currency';
+  else if(category==='adjustment')include=x.type==='partyAdjustment';
+  if(!include||!reportMatchesEntity(x,category,selected))return;
+  if(selectedGodam&&!(String(x.godam||'')===selectedGodam||String(x.from||'')===selectedGodam||String(x.to||'')===selectedGodam))return;
+  let visibleMoves=(['bank','bankin','bankout'].includes(category)?moves.filter(m=>!selected||m.account===selected):moves);
+  if(category==='bankin')visibleMoves=visibleMoves.filter(m=>m.amount>0);
+  if(category==='bankout')visibleMoves=visibleMoves.filter(m=>m.amount<0);
+  const cashIn=visibleMoves.filter(m=>m.amount>0).reduce((a,m)=>a+m.amount,0),cashOut=visibleMoves.filter(m=>m.amount<0).reduce((a,m)=>a+Math.abs(m.amount),0);
+  const accountText=visibleMoves.map(m=>m.account+': '+(m.amount<0?'−':'+')+money(Math.abs(m.amount))).join(' | ');
+  result.push({date:x.date||'',type:txLabel(x),party:x.customer||x.supplier||x.party||'',description:x.description||x.note||x.desc||x.jtype||x.mode||'',product:x.product||x.name||x.goodsProduct||x.desc||'',qty:x.qty??x.goodsQty??'',godam:x.godam||((x.from||x.to)?[x.from,x.to].filter(Boolean).join(' → '):''),amount:Number(x.total??x.amount??x.pkrValue??0)||0,cashIn,cashOut,account:accountText||moves.map(m=>m.account).join(', '),raw:x});
+ });
+ return result;
+}
+function stockMovementForReport(x,product,godam){
+ let inn=0,out=0,desc=String(x.description||x.note||txLabel(x));
+ if(['sale','purchase','saleReturn','purchaseReturn','stockMove'].includes(x.type)&&x.product===product&&x.godam===godam){
+  const q=+x.qty||0;if(x.type==='purchase'||x.type==='saleReturn'||(x.type==='stockMove'&&x.dir==='in'))inn=q;else out=q;
+ }else if(x.type==='transfer'&&x.product===product){if(x.from===godam){out=+x.qty||0;desc='Transfer to '+x.to}else if(x.to===godam){inn=+x.qty||0;desc='Transfer from '+x.from}else return null}
+ else if(x.type==='production'&&x.godam===godam){if(x.name===product)inn=+x.qty||0;else{const q=(x.items||[]).filter(i=>i.name===product).reduce((a,i)=>a+(+i.qty||0),0);if(q)out=q*(+x.qty||0);else return null}}
+ else if(x.type==='currency'&&x.mode==='goods'&&x.godam===godam&&x.goodsProduct===product){if(x.goodsDirection==='receiveGoods')inn=+x.goodsQty||0;else out=+x.goodsQty||0}
+ else return null;
+ return {inn,out,desc,date:x.date||'',party:x.customer||x.supplier||x.party||''};
+}
+function renderStockReport(){
+ const r=reportRange(),product=$('reportEntity')?.value||'',godam=$('reportGodam')?.value||'';
+ if(!product){$('reportHeading').innerHTML='<h3>Stock Report</h3><p class="muted">Select a product to see opening, stock IN, stock OUT and closing balance.</p>';$('reportCards').innerHTML='';$('reportTable').innerHTML='';return}
+ const locations=godam?[godam]:GODAMS,all=[];
+ locations.forEach(g=>{
+  let balance=0,opening=0,periodIn=0,periodOut=0,rows=[];
+  const txs=d.tx.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  txs.forEach(x=>{const m=stockMovementForReport(x,product,g);if(!m)return;const delta=m.inn-m.out;if(String(x.date||'')<r.f){balance+=delta;opening+=delta;return}if(String(x.date||'')>r.t)return;balance+=delta;periodIn+=m.inn;periodOut+=m.out;rows.push({date:m.date,desc:m.desc,party:m.party,inn:m.inn,out:m.out,balance})});
+  all.push({godam:g,opening,periodIn,periodOut,closing:balance,rows});
+ });
+ const sums=k=>all.reduce((a,x)=>a+(Number(x[k])||0),0),totalOpening=sums('opening'),totalIn=sums('periodIn'),totalOut=sums('periodOut'),totalClosing=sums('closing');
+ $('reportHeading').innerHTML='<h3>Stock Report — '+esc(product)+(godam?' — '+esc(godam):' — All Godams')+'</h3><p class="muted">'+esc(r.f)+' to '+esc(r.t)+' • Opening + IN − OUT = Closing</p>';
+ $('reportCards').innerHTML=[['Opening Stock',money(totalOpening)],['Stock IN (+)',money(totalIn)],['Stock OUT (−)',money(totalOut)],['Closing Balance',money(totalClosing)]].map(a=>'<div class="card"><div class="kpi">'+a[0]+'</div><div class="big">'+a[1]+'</div></div>').join('');
+ $('reportTable').innerHTML=all.map(g=>'<div class="card"><h3>'+esc(g.godam)+' — Opening '+money(g.opening)+' | IN '+money(g.periodIn)+' | OUT '+money(g.periodOut)+' | Closing '+money(g.closing)+'</h3><div class="tableWrap"><table><tr><th>Date</th><th>Description</th><th>Party</th><th>Stock IN (+)</th><th>Stock OUT (−)</th><th>Running Balance</th></tr>'+g.rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.desc)+'</td><td>'+esc(x.party)+'</td><td>'+(x.inn?money(x.inn):'')+'</td><td>'+(x.out?money(x.out):'')+'</td><td><b>'+money(x.balance)+'</b></td></tr>').join('')+'<tr><th colspan="3">Closing Balance</th><th>'+money(g.periodIn)+'</th><th>'+money(g.periodOut)+'</th><th>'+money(g.closing)+'</th></tr></table></div></div>').join('');
+}
+function renderReports(){
+ refreshReportFilters();if(($('reportCategory')?.value||'')==='stock'){renderStockReport();return}
+ const rows=reportRows(),r=reportRange(),category=$('reportCategory')?.selectedOptions?.[0]?.text||'All Transactions';
+ const filterName=$('reportEntity')?.selectedOptions?.[0]?.text||'',filterGodam=$('reportGodam')?.value||'';
+ const filterText=[filterName&&filterName!=='All'&&filterName!=='All Accounts'?filterName:'',filterGodam].filter(Boolean).join(' / ');
+ const sum=k=>rows.reduce((a,x)=>a+(Number(x[k])||0),0);
+ $('reportHeading').innerHTML='<h3>'+esc(category)+(filterText?' — '+esc(filterText):'')+' — '+esc(r.f)+' to '+esc(r.t)+'</h3><p class="muted">'+rows.length+' record(s)</p>';
+ $('reportCards').innerHTML=[['Records',rows.length],['Total Amount',money(sum('amount'))],['Cash / Bank In',money(sum('cashIn'))],['Cash / Bank Out',money(sum('cashOut'))]].map(a=>'<div class="card"><div class="kpi">'+a[0]+'</div><div class="big">'+a[1]+'</div></div>').join('');
+ $('reportTable').innerHTML=rows.length?'<table><tr><th>Date</th><th>Type</th><th>Party</th><th>Description</th><th>Product</th><th>Qty</th><th>Godam</th><th>Amount</th><th>Cash / Bank In</th><th>Cash / Bank Out</th><th>Account Movement</th></tr>'+rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.product)+'</td><td>'+esc(x.qty)+'</td><td>'+esc(x.godam)+'</td><td>'+money(x.amount)+'</td><td>'+money(x.cashIn)+'</td><td>'+money(x.cashOut)+'</td><td>'+esc(x.account)+'</td></tr>').join('')+'</table>':'<div class="empty">No records found for this category and date range.</div>';
+}
+function reportCsv(){
+ const rows=reportRows(),r=reportRange(),heads=['Date','Type','Party','Description','Product','Qty','Godam','Amount','Cash / Bank In','Cash / Bank Out','Account Movement'];
+ const data=rows.map(x=>[x.date,x.type,x.party,x.description,x.product,x.qty,x.godam,x.amount,x.cashIn,x.cashOut,x.account]),cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const csv='\\uFEFF'+[heads,...data].map(row=>row.map(cell).join(',')).join('\\r\\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='Mastan_Shah_Report_'+r.f+'_to_'+r.t+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function reportPdfBlob(){
+ const rows=reportRows(),r=reportRange(),category=$('reportCategory')?.selectedOptions?.[0]?.text||'All Transactions',pageW=842,pageH=595,margin=24,bottom=30,usable=pageW-margin*2,pages=[];let cmds=[],y=pageH-48;
+ const safe=v=>String(v??'').replace(/[^\x20-\x7E]/g,' ').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+ const txt=(x,yy,v,size=7,bold=false)=>cmds.push('0 0 0 rg BT /'+(bold?'F2':'F1')+' '+size+' Tf 1 0 0 1 '+x+' '+yy+' Tm ('+safe(v)+') Tj ET');
+ const line=(x1,y1,x2,y2)=>cmds.push('0.5 w 0.5 0.5 0.5 RG '+x1+' '+y1+' m '+x2+' '+y2+' l S');
+ const header=()=>{txt(margin,pageH-24,'Mastan Shah Software',13,true);txt(margin,pageH-39,category,8,true);txt(margin,pageH-51,'Date: '+r.f+' to '+r.t+' | Records: '+rows.length,7);y=pageH-70};
+ const finish=()=>{if(cmds.length)pages.push(cmds.join('\\n'));cmds=[];y=pageH-48;header()};
+ header();
+ const heads=['Date','Type','Party','Description','Product','Qty','Godam','Amount','Cash In','Cash Out','Account'],widths=[55,55,82,112,75,28,65,65,65,65,112],scale=usable/widths.reduce((a,b)=>a+b,0),ws=widths.map(v=>v*scale),font=5.7;
+ const drawHead=()=>{let x=margin;heads.forEach((h,i)=>{cmds.push('0.92 0.92 0.92 rg '+x+' '+(y-18)+' '+ws[i]+' 18 re f');line(x,y,x,y-18);txt(x+2,y-12,h,font,true);x+=ws[i]});line(margin+usable,y,margin+usable,y-18);line(margin,y-18,margin+usable,y-18);y-=18};
+ const wrap=(v,n)=>{let z=String(v??'');if(!z)return [''];let out=[];while(z.length>n){out.push(z.slice(0,n));z=z.slice(n)}out.push(z);return out};
+ drawHead();
+ for(const row of rows){const vals=[row.date,row.type,row.party,row.description,row.product,row.qty,row.godam,money(row.amount),money(row.cashIn),money(row.cashOut),row.account],parts=vals.map((v,i)=>wrap(v,Math.max(5,Math.floor(ws[i]/(font*.55))))),count=Math.max(...parts.map(a=>a.length)),rh=Math.max(18,count*8+6);if(y-rh<bottom){finish();drawHead()}let x=margin;parts.forEach((arr,i)=>{line(x,y,x,y-rh);arr.forEach((v,k)=>txt(x+2,y-9-k*8,v,font));x+=ws[i]});line(margin+usable,y,margin+usable,y-rh);line(margin,y-rh,margin+usable,y-rh);y-=rh}
+ if(cmds.length)pages.push(cmds.join('\\n'));
+ const objs=[null,null,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'],refs=[];
+ for(const content of pages){const ci=objs.length+1;objs.push('<< /Length '+content.length+' >>\\nstream\\n'+content+'\\nendstream');const pi=objs.length+1;objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents '+ci+' 0 R >>');refs.push(pi)}
+ objs[0]='<< /Type /Catalog /Pages 2 0 R >>';objs[1]='<< /Type /Pages /Kids ['+refs.map(x=>x+' 0 R').join(' ')+'] /Count '+refs.length+' >>';
+ let pdf='%PDF-1.4\\n',offs=[0];for(let i=0;i<objs.length;i++){offs[i+1]=pdf.length;pdf+=(i+1)+' 0 obj\\n'+objs[i]+'\\nendobj\\n'}const xr=pdf.length;pdf+='xref\\n0 '+(objs.length+1)+'\\n0000000000 65535 f \\n';for(let i=1;i<objs.length;i++)pdf+=String(offs[i]).padStart(10,'0')+' 00000 n \\n';pdf+='trailer\\n<< /Size '+objs.length+' /Root 1 0 R >>\\nstartxref\\n'+xr+'\\n%%EOF';
+ return new Blob([pdf],{type:'application/pdf'});
+}
+async function reportWhatsApp(){
+ const r=reportRange(),file=new File([reportPdfBlob()],'Mastan_Shah_Report_'+r.f+'_to_'+r.t+'.pdf',{type:'application/pdf'}),msg='Mastan Shah Software report ('+r.f+' to '+r.t+')';
+ try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title:'Mastan Shah Software Report',text:msg,files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
+ const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+ alert('PDF download ho gayi hai. WhatsApp chat mein attachment select karke Send karein.');window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function reportPrint(){
+ const rows=reportRows(),r=reportRange(),category=$('reportCategory')?.selectedOptions?.[0]?.text||'All Transactions',heads=['Date','Type','Party','Description','Product','Qty','Godam','Amount','Cash In','Cash Out','Account Movement'];
+ const body=rows.map(x=>[x.date,x.type,x.party,x.description,x.product,x.qty,x.godam,money(x.amount),money(x.cashIn),money(x.cashOut),x.account]),w=window.open('','_blank');
+ if(!w){alert('Browser blocked popup. Allow popups to print the report.');return}
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Mastan Shah Report</title><style>body{font-family:Arial;padding:18px;color:#111}h2{margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #aaa;padding:6px;font-size:9px;text-align:left;vertical-align:top}th{background:#eee}@media print{button{display:none}}</style></head><body><h2>Mastan Shah Software</h2><b>'+esc(category)+'</b><p>Date Range: '+esc(r.f)+' to '+esc(r.t)+' | Records: '+rows.length+'</p><table><tr>'+heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+body.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table><script>window.onload=()=>window.print()<\\/script></body></html>');w.document.close();
+}
+function setReportRange(kind){
+ const now=new Date(),end=today();let from=end,to=end;
+ if(kind==='yesterday'){const d0=new Date(now);d0.setDate(d0.getDate()-1);from=to=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0')+'-'+String(d0.getDate()).padStart(2,'0')}
+ if(kind==='week'){const d0=new Date(now);d0.setDate(d0.getDate()-((d0.getDay()+6)%7));from=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0')+'-'+String(d0.getDate()).padStart(2,'0')}
+ if(kind==='month')from=end.slice(0,7)+'-01';if(kind==='year')from=end.slice(0,4)+'-01-01';
+ $('reportFrom').value=from;$('reportTo').value=to;renderReports();
+}
 function snapProducts(){let c=compute();return d.products.map(p=>{let qty=GODAMS.reduce((a,g)=>a+(c.stock[g+'||'+p]||0),0);return {product:p,qty,rate:0,total:0}})}
 function renderSnapForm(){let items=snapProducts();$('snapProducts').innerHTML=items.map((x,i)=>`<div class="row card"><b style="min-width:130px">${esc(x.product)}</b><span>Qty: ${x.qty}</span><input class="snapRate" data-product="${esc(x.product)}" type="number" min="0" placeholder="Manual Rate"><span class="snapItemTotal">0</span></div>`).join('')||'<div class="empty">No products</div>';document.querySelectorAll('.snapRate').forEach(el=>el.addEventListener('input',calcSnap))}
 function calcSnap(){let total=0;document.querySelectorAll('.snapRate').forEach(el=>{let qty=Number(snapProducts().find(x=>x.product===el.dataset.product)?.qty||0),v=qty*(+el.value||0);el.parentElement.querySelector('.snapItemTotal').textContent=money(v);total+=v});let nums=['snapCash','snapMeezan','snapAlfalah','snapFaisal','snapBaseer','snapRecv','snapPayable'].map(id=>+$(id).value||0);let net=total+nums.slice(0,5).reduce((a,x)=>a+x,0)+nums[5]-nums[6];$('snapTotal').innerHTML=`<div class="big">Stock Value: ${money(total)} • Net Capital: ${money(net)}</div>`}
@@ -663,7 +851,7 @@ function globalSearch(){
  $('searchResults').innerHTML=out.join('')||'<div class="empty">No matching customer, supplier, product, godam or account found.</div>';
 }
 function switchTab(tab){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hide',x.id!==tab));document.querySelectorAll('#tabs [data-tab]').forEach(x=>x.classList.toggle('primary',x.dataset.tab===tab));try{sessionStorage.setItem('mastan_v2_active_tab',tab);localStorage.setItem('mastan_v2_active_tab',tab);localStorage.setItem('sr_v1_active_tab',tab)}catch(e){}if(tab==='snapshot')renderSnapForm();if(tab==='people')renderPeople();if(tab==='admin2')renderAdmin2();if(tab==='journal')renderJournal();if(tab==='reports')renderReports()}
-const applyCustomRange=(prefix)=>{const f=$(prefix+'From')?.value,t=$(prefix+'To')?.value;if(!f||!t){alert('Please select both From Date and To Date');return}if(f>t){alert('From Date cannot be after To Date');return}$('from').value=f;$('to').value=t;renderAll()};$('journalRangeApply')?.addEventListener('click',()=>applyCustomRange('journal'));$('reportRangeApply')?.addEventListener('click',()=>applyCustomRange('report'));$('reportTypeFilter')?.addEventListener('change',renderReports);['reportProductFilter','reportGodamFilter','journalProductFilter','journalGodamFilter'].forEach(id=>$(id)?.addEventListener('input',()=>{renderReports();renderJournal()}));$('reportGodamFilter')?.addEventListener('change',renderReports);$('journalGodamFilter')?.addEventListener('change',renderJournal);
+const applyCustomRange=(prefix)=>{const f=$(prefix+'From')?.value,t=$(prefix+'To')?.value;if(!f||!t){alert('Please select both From Date and To Date');return}if(f>t){alert('From Date cannot be after To Date');return}$('from').value=f;$('to').value=t;renderAll()};$('journalRangeApply')?.addEventListener('click',()=>applyCustomRange('journal'));$('reportRangeApply')?.addEventListener('click',()=>{const f=$('reportFrom').value,t=$('reportTo').value;if(!f||!t){alert('Please select both From Date and To Date');return}if(f>t){alert('From Date cannot be after To Date');return}$('from').value=f;$('to').value=t;renderReports()});$('reportCategory')?.addEventListener('change',renderReports);$('reportEntity')?.addEventListener('change',renderReports);$('reportGodam')?.addEventListener('change',renderReports);document.querySelectorAll('[data-report-range]').forEach(b=>b.addEventListener('click',()=>setReportRange(b.dataset.reportRange)));$('reportPrint')?.addEventListener('click',reportPrint);$('reportWhatsApp')?.addEventListener('click',reportWhatsApp);$('reportCsv')?.addEventListener('click',reportCsv);['journalProductFilter','journalGodamFilter'].forEach(id=>$(id)?.addEventListener('input',renderJournal));$('journalGodamFilter')?.addEventListener('change',renderJournal);
 function refreshActivityGodamFilters(){['journalGodamFilter','reportGodamFilter'].forEach(id=>{let el=$(id);if(!el)return;let v=el.value;el.innerHTML='<option value="">All Godams</option>'+GODAMS.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');el.value=GODAMS.includes(v)?v:''})}
 function renderAll(){['journal','report'].forEach(prefix=>{if($(prefix+'From'))$(prefix+'From').value=$('from')?.value||today();if($(prefix+'To'))$(prefix+'To').value=$('to')?.value||today()});refreshActivityGodamFilters();syncAccounts();updateLists();renderGodamList();renderProductList();renderBankList();renderDashboard();renderSales();renderPurchases();renderPayments();renderPeople();renderStock();renderProduction();renderExpense();renderJournal();renderReports();renderSnapForm();renderSnapshots();renderHistory();globalSearch();renderCurrency();renderAdmin2();calcSnap();$('snapDate').value=$('snapDate').value||today();}
 function addRecipe(){let r=document.createElement('div');r.className='row card recipeRow';r.innerHTML='<input class="rawName" list="productDL" placeholder="Raw item"><input class="rawQty" type="number" min="1" placeholder="Qty per finished piece"><button type="button" class="btn danger removeRecipe">Remove</button>';$('recipe').appendChild(r)}
